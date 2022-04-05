@@ -3,7 +3,7 @@ object Form1: TForm1
   Top = 0
   Caption = 'Simple P4D Demo'
   ClientHeight = 599
-  ClientWidth = 957
+  ClientWidth = 624
   Color = clBtnFace
   CustomTitleBar.CaptionAlignment = taCenter
   Font.Charset = DEFAULT_CHARSET
@@ -16,20 +16,19 @@ object Form1: TForm1
   TextHeight = 13
   object Splitter1: TSplitter
     Left = 0
-    Top = 341
-    Width = 957
-    Height = 3
+    Top = 257
+    Width = 624
+    Height = 0
     Cursor = crVSplit
     Align = alTop
     ResizeStyle = rsUpdate
-    ExplicitTop = 201
-    ExplicitWidth = 383
+    ExplicitTop = 341
   end
   object sePythonCode: TSynEdit
     Left = 0
     Top = 15
-    Width = 957
-    Height = 326
+    Width = 624
+    Height = 242
     Align = alTop
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -55,12 +54,11 @@ object Form1: TForm1
       'print (sys.prefix)'
       'print("Environment base prefix.")'
       'print (sys.base_prefix)')
-    ExplicitTop = 13
   end
   object HeaderControl1: THeaderControl
     Left = 0
     Top = 0
-    Width = 957
+    Width = 624
     Height = 15
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -73,40 +71,73 @@ object Form1: TForm1
         AutoSize = True
         ImageIndex = -1
         Text = 'Python Source code'
-        Width = 957
+        Width = 624
       end>
     ParentFont = False
+    ExplicitWidth = 957
   end
   object Panel1: TPanel
     Left = 0
     Top = 558
-    Width = 957
+    Width = 624
     Height = 41
     Align = alBottom
     TabOrder = 2
+    ExplicitWidth = 957
+    object SpeedButtonSelectDll: TSpeedButton
+      Left = 448
+      Top = 6
+      Width = 23
+      Height = 22
+      OnClick = SpeedButtonSelectDllClick
+    end
     object btnRun: TButton
-      Left = 24
-      Top = 5
+      Left = 534
+      Top = 6
       Width = 75
       Height = 25
       Caption = 'Run'
       TabOrder = 0
       OnClick = btnRunClick
     end
+    object ComboBoxPyVEnv: TComboBox
+      Left = 9
+      Top = 6
+      Width = 264
+      Height = 21
+      Align = alCustom
+      ItemIndex = 0
+      TabOrder = 1
+      Text = 'C:\ProgramData\Anaconda3'
+      OnChange = ComboBoxPyVEnvChange
+      Items.Strings = (
+        'C:\ProgramData\Anaconda3'
+        'c:\ProgramData\Anaconda3\envs\p_38_idera\')
+    end
+    object EditPythonDll: TEdit
+      Left = 287
+      Top = 6
+      Width = 162
+      Height = 21
+      Enabled = False
+      TabOrder = 2
+      Text = 'Python 3.8'
+    end
   end
   object Panel2: TPanel
     Left = 0
-    Top = 344
-    Width = 957
-    Height = 214
+    Top = 257
+    Width = 624
+    Height = 301
     Align = alClient
     TabOrder = 3
-    ExplicitTop = 348
-    ExplicitHeight = 210
+    ExplicitTop = 344
+    ExplicitWidth = 957
+    ExplicitHeight = 214
     object HeaderControl2: THeaderControl
       Left = 1
       Top = 1
-      Width = 955
+      Width = 622
       Height = 17
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -119,15 +150,16 @@ object Form1: TForm1
           AutoSize = True
           ImageIndex = -1
           Text = 'Python Output'
-          Width = 955
+          Width = 622
         end>
       ParentFont = False
+      ExplicitWidth = 955
     end
     object mePythonOutput: TMemo
       Left = 1
       Top = 18
-      Width = 955
-      Height = 174
+      Width = 622
+      Height = 282
       Align = alClient
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -136,24 +168,8 @@ object Form1: TForm1
       Font.Style = []
       ParentFont = False
       TabOrder = 1
-      ExplicitHeight = 191
-    end
-    object ComboBox1: TComboBox
-      Left = 1
-      Top = 192
-      Width = 955
-      Height = 21
-      Align = alBottom
-      ItemIndex = 0
-      TabOrder = 2
-      Text = 'C:\ProgramData\Anaconda3'
-      OnChange = ComboBox1Change
-      Items.Strings = (
-        'C:\ProgramData\Anaconda3'
-        'c:\ProgramData\Anaconda3\envs\p_38_idera\')
-      ExplicitLeft = 128
-      ExplicitTop = 193
-      ExplicitWidth = 145
+      ExplicitWidth = 955
+      ExplicitHeight = 195
     end
   end
   object SynPythonSyn: TSynPythonSyn
@@ -174,5 +190,10 @@ object Form1: TForm1
     Output = mePythonOutput
     Left = 880
     Top = 80
+  end
+  object OpenDialogPythonDll: TOpenDialog
+    Filter = 'Python Dynamic Link Library|python*.dll'
+    Left = 488
+    Top = 558
   end
 end
