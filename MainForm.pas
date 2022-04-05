@@ -26,10 +26,12 @@ type
     EditPythonDll: TEdit;
     SpeedButtonSelectDll: TSpeedButton;
     OpenDialogPythonDll: TOpenDialog;
+    PythonDelphiVar1: TPythonDelphiVar;
     procedure btnRunClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure ComboBoxPyVEnvChange(Sender: TObject);
     procedure SpeedButtonSelectDllClick(Sender: TObject);
+    procedure PythonDelphiVar1Change(Sender: TObject);
   private
     { Private declarations }
     _PythonEngine: TPythonEngine;  //Writhing
@@ -54,8 +56,14 @@ procedure TForm1.btnRunClick(Sender: TObject);
 begin
   var WrithingPythonEngine := PythonEngine as TWrithingPythonEngine;
   WrithingPythonEngine.Attach();
+  PythonDelphiVar1.Engine := PythonEngine;
+  //var PyVar := TPythonDelphiVar.Create(nil);
 
+  //if VarIsNull(PythonDelphiVar1.Value) then //!! "NULL" instead "Unassigned"
+
+  (PythonDelphiVar1 as TPersistentPythonDelphiVar).RestoreValue;
   PythonEngine.ExecString(sePythonCode.Text);  //UTF8Encode()
+  (PythonDelphiVar1 as TPersistentPythonDelphiVar).StoreValue;
 end;
 
 procedure TForm1.ComboBoxPyVEnvChange(Sender: TObject);
@@ -69,6 +77,16 @@ begin
       .Configure('C:\ProgramData\Anaconda3', '3.8');
 
   PythonEngine.IO :=  PythonGUIInputOutput;
+
+  PythonDelphiVar1 := TPersistentPythonDelphiVar.Create(Self);
+  PythonDelphiVar1.Engine := PythonEngine;
+  PythonDelphiVar1.VarName := 'shared_variable';
+  (PythonDelphiVar1 as TPersistentPythonDelphiVar).Init(0);
+end;
+
+procedure TForm1.PythonDelphiVar1Change(Sender: TObject);
+begin
+  ShowMessage(PythonDelphiVar1.ValueAsString);
 end;
 
 procedure TForm1.SpeedButtonSelectDllClick(Sender: TObject);

@@ -46,6 +46,7 @@ object Form1: TForm1
     Highlighter = SynPythonSyn
     Lines.Strings = (
       'import sys'
+      'print(f'#39'Run #{shared_variable.Value}'#39')'
       'print("Python version")'
       'print (sys.version)'
       'print("Version info.")'
@@ -53,7 +54,9 @@ object Form1: TForm1
       'print("Environment prefix.")'
       'print (sys.prefix)'
       'print("Environment base prefix.")'
-      'print (sys.base_prefix)')
+      'print (sys.base_prefix)'
+      'shared_variable.Value =  shared_variable.Value + 1'
+      'print(f'#39'Next run -> #{shared_variable.Value}'#39')')
   end
   object HeaderControl1: THeaderControl
     Left = 0
@@ -187,5 +190,12 @@ object Form1: TForm1
     Filter = 'Python Dynamic Link Library|python*.dll'
     Left = 488
     Top = 558
+  end
+  object PythonDelphiVar1: TPythonDelphiVar
+    Module = '__main__'
+    VarName = 'shared_variable0'
+    OnChange = PythonDelphiVar1Change
+    Left = 512
+    Top = 553
   end
 end
