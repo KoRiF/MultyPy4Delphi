@@ -1,7 +1,7 @@
 object Form1: TForm1
   Left = 0
   Top = 0
-  Caption = 'Simple P4D Demo'
+  Caption = 'Multy Environmental Demo '
   ClientHeight = 599
   ClientWidth = 624
   Color = clBtnFace
@@ -74,7 +74,6 @@ object Form1: TForm1
         Width = 624
       end>
     ParentFont = False
-    ExplicitWidth = 957
   end
   object Panel1: TPanel
     Left = 0
@@ -83,7 +82,6 @@ object Form1: TForm1
     Height = 41
     Align = alBottom
     TabOrder = 2
-    ExplicitWidth = 957
     object SpeedButtonSelectDll: TSpeedButton
       Left = 448
       Top = 6
@@ -131,9 +129,6 @@ object Form1: TForm1
     Height = 301
     Align = alClient
     TabOrder = 3
-    ExplicitTop = 344
-    ExplicitWidth = 957
-    ExplicitHeight = 214
     object HeaderControl2: THeaderControl
       Left = 1
       Top = 1
@@ -153,7 +148,6 @@ object Form1: TForm1
           Width = 622
         end>
       ParentFont = False
-      ExplicitWidth = 955
     end
     object mePythonOutput: TMemo
       Left = 1
@@ -168,8 +162,6 @@ object Form1: TForm1
       Font.Style = []
       ParentFont = False
       TabOrder = 1
-      ExplicitWidth = 955
-      ExplicitHeight = 195
     end
   end
   object SynPythonSyn: TSynPythonSyn

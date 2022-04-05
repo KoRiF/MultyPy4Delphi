@@ -1,4 +1,4 @@
-program SimplePyLoad;
+program MultyPy4Delphi;
 
 uses
   Vcl.Forms,
