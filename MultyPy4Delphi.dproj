@@ -65,6 +65,9 @@
         <UWP_DelphiLogo44>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_44.png</UWP_DelphiLogo44>
         <UWP_DelphiLogo150>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_150.png</UWP_DelphiLogo150>
         <SanitizedProjectName>MultyPy4Delphi</SanitizedProjectName>
+        <DCC_UnitSearchPath>.\NumPy;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <VerInfo_Locale>1033</VerInfo_Locale>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <DCC_UsePackage>DBXSqliteDriver;RESTComponents;DBXInterBaseDriver;vclactnband;vclFireDAC;bindcompvclsmp;tethering;svnui;FireDACADSDriver;JvPluginSystem;JvMM;vcltouch;vcldb;bindcompfmx;svn;JvNet;inetdb;JvAppFrm;VirtualTreesDR;FmxTeeUI;fmx;FireDACIBDriver;fmxdae;EasyListviewD;vcledge;VirtualShellToolsD;JvWizards;SpTBXLib;dbexpress;IndyCore;vclx;Python_D;JvPageComps;dsnap;FireDACCommon;RESTBackendComponents;VCLRESTComponents;soapserver;JclDeveloperTools;vclie;bindengine;DBXMySQLDriver;CloudService;SVGIconPackage;FireDACMySQLDriver;JvCmp;JvHMI;FireDACCommonODBC;FireDACCommonDriver;inet;SynWeb_RD;IndyIPCommon;bindcompdbx;JvCustom;vcl;IndyIPServer;IndySystem;dsnapcon;FireDACMSAccDriver;fmxFireDAC;PyScripterCustom;vclimg;TeeDB;FireDAC;Jcl;JvCore;JvCrypt;FireDACSqliteDriver;FireDACPgDriver;FMXTee;soaprtl;DbxCommonDriver;JvDlgs;JvRuntimeDesign;Tee;xmlrtl;soapmidas;fmxobj;vclwinx;rtl;DbxClientDriver;CustomIPTransport;vcldsnap;CodeSiteExpressPkg;JvSystem;JvStdCtrls;SynEditDR;bindcomp;appanalytics;IndyIPClient;bindcompvcl;SVGIconImageList;TeeUI;JvDocking;dbxcds;VclSmp;adortl;JclVcl;tb2k_d12;MPCommonLibD;dsnapxml;dbrtl;IndyProtocols;inetdbxpress;JvControls;JvPrintPreview;JclContainers;fmxase;$(DCC_UsePackage)</DCC_UsePackage>
@@ -100,6 +103,8 @@
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_Locale>1033</VerInfo_Locale>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -141,9 +146,10 @@
         <BorlandProject>
             <Delphi.Personality>
                 <Excluded_Packages>
-                    <Excluded_Packages Name="C:\Program Files (x86)\ProjectMagician\ProjectMagician270.bpl">Project Magician V1.0.21</Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k270.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp270.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\bcboffice2k280.bpl">Embarcadero C++Builder Office 2000 Servers Package</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\bcbofficexp280.bpl">Embarcadero C++Builder Office XP Servers Package</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k280.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="C:\Program Files (x86)\Winsoft\Office Component Suite\Delphi11\officep.bpl">File C:\Program Files (x86)\Winsoft\Office Component Suite\Delphi11\officep.bpl not found</Excluded_Packages>
                 </Excluded_Packages>
                 <Source>
                     <Source Name="MainSource">MultyPy4Delphi.dpr</Source>
