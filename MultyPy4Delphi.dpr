@@ -2,7 +2,8 @@ program MultyPy4Delphi;
 
 uses
   Vcl.Forms,
-  MainForm in 'MainForm.pas' {Form1};
+  MainForm in 'MainForm.pas' {Form1},
+  UnitGridDataPy in 'UnitGridDataPy.pas';
 
 {$R *.res}
 
