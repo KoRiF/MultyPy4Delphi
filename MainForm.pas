@@ -105,7 +105,8 @@ procedure TForm1.ButtonPassTableDataClick(Sender: TObject);
 const
   ITEM_IX_CODE_INJECTION = 0;
   ITEM_IX_CPYTHON_INSTRUCTIONS = 1;
-  ITEM_IX_NUMPY4DELPHI_WRAPPING = 2;
+  ITEM_IX_WRAP_AS_FIELD = 2;
+  ITEM_IX_NUMPY4DELPHI_WRAPPING = 3;
 begin
   var tableIdentifier := LabeledEditTablePyIdentifier.Text;
 
@@ -115,6 +116,8 @@ begin
     StringGridDataTable.InjectToNDArray(tableIdentifier);
   ITEM_IX_CPYTHON_INSTRUCTIONS:
     StringGridDataTable.FillToCPyNDArray(tableIdentifier);
+  ITEM_IX_WRAP_AS_FIELD,
+
   ITEM_IX_NUMPY4DELPHI_WRAPPING:
     StringGridDataTable.WrapToNDArray(tableIdentifier, PythonModule1);
   else
@@ -123,6 +126,14 @@ begin
   end;
 
   var tablePyIdentifier := LabeledEditTablePyIdentifier.Text;
+
+  if UnitGridDataPy.PythonModuleName <> '' then
+  begin
+    var printline0 := String.Format('from %s import %s',[PythonModule1.ModuleName, tablePyIdentifier]);
+    if pos(printline0, SynEditPythonScript.Text) = 0 then
+      SynEditPythonScript.Lines.Add(printline0);
+  end;
+
   var printline1 := String.Format('print(type(%s))', [tablePyIdentifier]);
   var printline2 := String.Format('print(%s)', [tablePyIdentifier]);
 

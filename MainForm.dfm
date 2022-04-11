@@ -229,12 +229,13 @@ object Form1: TForm1
       object RadioGroupPassTableOption: TRadioGroup
         Left = 88
         Top = 304
-        Width = 185
+        Width = 257
         Height = 105
         Caption = 'Pass Table Data Options'
         Items.Strings = (
           'Use Python script injections'
           'Use CPython Engine Instructions'
+          'Use PyDelphiWrapper (wrap array as object field)'
           'Use NumPy4Delphi wrapping')
         TabOrder = 4
       end
