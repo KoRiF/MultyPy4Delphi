@@ -116,8 +116,8 @@ begin
     StringGridDataTable.InjectToNDArray(tableIdentifier);
   ITEM_IX_CPYTHON_INSTRUCTIONS:
     StringGridDataTable.FillToCPyNDArray(tableIdentifier);
-  ITEM_IX_WRAP_AS_FIELD,
-
+  ITEM_IX_WRAP_AS_FIELD:
+    StringGridDataTable.WrapAsObjectField(PyDelphiWrapper1, tableIdentifier);
   ITEM_IX_NUMPY4DELPHI_WRAPPING:
     StringGridDataTable.WrapToNDArray(tableIdentifier, PythonModule1);
   else
