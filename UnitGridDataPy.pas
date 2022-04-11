@@ -7,7 +7,22 @@ type
   ConverterToArray = TFunc<TArray<Double>>;
   ConverterTo2DArray = TFunc<TArray2D<Double>>;
 
+  TStringGridArrayContiner = Class
+    private
+    var
+      _Grid: TStringGrid;
+      _NumericArray: TArray2D<Double>;
+    function GetValueByIx(i, j: Integer): Double;
+    procedure SetValueByIx(i, j: Integer; value: Double);
+    public
+    constructor Create(Grid: TStringGrid);
+    property numeric_array: TArray2D<Double> read _NumericArray;
+    property Value[i, j: Integer]: Double read GetValueByIx write SetValueByIx; default;
+  End;
+
   TStringGridPyHelper = Class Helper for TStringGrid
+    function WrapAsObjectField(PyWrapper: TPyDelphiWrapper; PyIdentifier: string): TStringGridArrayContiner;
+
     procedure InjectToPyList(PyIdentifier: string);
     procedure InjectToNDArray(PyIdentifier: string);
     procedure FillToCPyList(PyIdentifier: string);
@@ -431,6 +446,22 @@ begin
   WrapGridAsNumPyNDArray(Self, Wrapper, PyIdentifier, GridToArray, True);
 end;
 
+function TStringGridPyHelper.WrapAsObjectField(PyWrapper: TPyDelphiWrapper;
+  PyIdentifier: string): TStringGridArrayContiner;
+var ArrayContainer:  TStringGridArrayContiner;
+begin
+  ArrayContainer := TStringGridArrayContiner.Create(Self);
+  var pyContainerIdentifier: AnsiString := 'tarray_'+PyIdentifier;
+  var pyObj := PyWrapper.Wrap(ArrayContainer, soOwned);
+  PyWrapper.Module.SetVar(pyContainerIdentifier, pyObj);
+  PyWrapper.Engine.Py_DECREF(pyObj);
+
+  var PyEngine := PyWrapper.Engine;
+  PyEngine.ExecString('import numpy as np');
+  var pycmd := String.Format('%s = np.frombuffer(%s.numeric_array)', [PyIdentifier, pyContainerIdentifier]);
+  PyEngine.ExecString(pycmd);
+end;
+
 procedure TStringGridPyHelper.WrapToNDArray(PyIdentifier: string;
   PyModule: TPythonModule);
 begin
@@ -456,5 +487,23 @@ end;
 //  else
 //    Wrap2DToFlattenedArray(Wrapper, PyIdentifier); // [ [Cell[0,0] ]]
 //end;
+
+{ TStringGridArrayContiner }
+
+constructor TStringGridArrayContiner.Create(Grid: TStringGrid);
+begin
+  _NumericArray := GridTo2DArray(Grid);
+  _Grid := Grid;
+end;
+
+function TStringGridArrayContiner.GetValueByIx(i, j: Integer): Double;
+begin
+  RESULT := _NumericArray[i][j];
+end;
+
+procedure TStringGridArrayContiner.SetValueByIx(i, j: Integer; value: Double);
+begin
+  _NumericArray[i][j] := value;
+end;
 
 end.
