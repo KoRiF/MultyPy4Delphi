@@ -227,9 +227,9 @@ object Form1: TForm1
         OnClick = ButtonPassTableDataClick
       end
       object RadioGroupPassTableOption: TRadioGroup
-        Left = 88
+        Left = 64
         Top = 304
-        Width = 257
+        Width = 281
         Height = 105
         Caption = 'Pass Table Data Options'
         Items.Strings = (

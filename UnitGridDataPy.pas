@@ -9,19 +9,27 @@ type
 
   TStringGridArrayContiner = Class
     private
+    const PYIDENTIFIER_TEMPLATE = 'tarray_%s';
     var
       _Grid: TStringGrid;
-      _NumericArray: TArray2D<Double>;
-    function GetValueByIx(i, j: Integer): Double;
-    procedure SetValueByIx(i, j: Integer; value: Double);
+      _NumericArray: TArray<Double>;
+      _PyContainerName: String;
+    private
+      function GetLineBreakSize(): Integer;
+      property Breaksize: Integer read GetLineBreakSize;
+      function GetValueByIx(i, j: Integer): Double;
+      procedure SetValueByIx(i, j: Integer; value: Double);
     public
-    constructor Create(Grid: TStringGrid);
-    property numeric_array: TArray2D<Double> read _NumericArray;
-    property Value[i, j: Integer]: Double read GetValueByIx write SetValueByIx; default;
+      constructor Create(Grid: TStringGrid);
+      property numeric_array: TArray<Double> read _NumericArray;
+      property Value[i, j: Integer]: Double read GetValueByIx write SetValueByIx; default;
+    public
+      function WrapToPyObject(PyWrapper: TPyDelphiWrapper; PyIdentifier: string): TStringGridArrayContiner;
+      procedure PyExecDataAsNDArray(Module: TPythonModule; PyIdentifier: string);
   End;
 
   TStringGridPyHelper = Class Helper for TStringGrid
-    function WrapAsObjectField(PyWrapper: TPyDelphiWrapper; PyIdentifier: string): TStringGridArrayContiner;
+    procedure WrapAsObjectField(PyWrapper: TPyDelphiWrapper; PyIdentifier: string);
 
     procedure InjectToPyList(PyIdentifier: string);
     procedure InjectToNDArray(PyIdentifier: string);
@@ -31,6 +39,7 @@ type
     procedure Wrap1DToArray(Wrapper: TPyDelphiWrapper; PyIdentifier: string; dim: Integer = 0);
     //procedure Wrap2DToFlattenedArray(Wrapper: TPyDelphiWrapper; PyIdentifier: string);
     procedure WrapToNDArray(PyIdentifier: string; PyModule: TPythonModule);
+
   private
     procedure Wrap2DToFlattenedArray(Wrapper: TPyDelphiWrapper;
       PyIdentifier: string);
@@ -38,6 +47,14 @@ type
     function CoversionToArray(dim: Integer): ConverterToArray;
     function CoversionTo2DArray(): ConverterTo2DArray;
     function To2DArray: TArray2D<Double>;
+  private
+    function GetDataRows(): Integer;
+    procedure SetDataRows(M: Integer);
+    function GetDataColumns(): Integer;
+    procedure SetDataColumns(N: Integer);
+  public
+    property NumDataRows: Integer read GetDataRows write SetDataRows;
+    property NumDataColumns: Integer read GetDataColumns write SetDataColumns;
   End;
 
 
@@ -391,6 +408,16 @@ begin
   PyEngine.ExecString(injScript);
 end;
 
+function TStringGridPyHelper.GetDataColumns: Integer;
+begin
+  RESULT := Self.ColCount - Self.FixedCols;
+end;
+
+function TStringGridPyHelper.GetDataRows: Integer;
+begin
+  RESULT := Self.RowCount - Self.FixedCols;
+end;
+
 procedure TStringGridPyHelper.InjectToNDArray(PyIdentifier: string);
 begin
   var PyEngine := PythonEngine.GetPythonEngine();
@@ -414,15 +441,25 @@ begin
     PyExecInjectGridTo2DPyList(Self, PyIdentifier); // [ [Cell[0,0] ]]
 end;
 
+procedure TStringGridPyHelper.SetDataColumns(N: Integer);
+begin
+  Self.ColCount := Self.FixedCols + N;
+end;
+
+procedure TStringGridPyHelper.SetDataRows(M: Integer);
+begin
+  Self.RowCount := Self.FixedRows + M;
+end;
+
+procedure TStringGridPyHelper.ShareAsMemoryNumericData(PyIdentifier: string);
+begin
+//TODO: implement
+end;
+
 function TStringGridPyHelper.To2DArray: TArray2D<Double>;
 begin
   RESULT := GridTo2DArray(Self);
 end;
-
-//function TStringGridPyHelper.ToArray: TArray<Double>;
-//begin
-//  RESULT :=
-//end;
 
 procedure TStringGridPyHelper.Wrap1DToArray(Wrapper: TPyDelphiWrapper;
   PyIdentifier: string; dim: Integer);
@@ -446,20 +483,13 @@ begin
   WrapGridAsNumPyNDArray(Self, Wrapper, PyIdentifier, GridToArray, True);
 end;
 
-function TStringGridPyHelper.WrapAsObjectField(PyWrapper: TPyDelphiWrapper;
-  PyIdentifier: string): TStringGridArrayContiner;
+procedure TStringGridPyHelper.WrapAsObjectField(PyWrapper: TPyDelphiWrapper;
+  PyIdentifier: string);
 var ArrayContainer:  TStringGridArrayContiner;
 begin
   ArrayContainer := TStringGridArrayContiner.Create(Self);
-  var pyContainerIdentifier: AnsiString := 'tarray_'+PyIdentifier;
-  var pyObj := PyWrapper.Wrap(ArrayContainer, soOwned);
-  PyWrapper.Module.SetVar(pyContainerIdentifier, pyObj);
-  PyWrapper.Engine.Py_DECREF(pyObj);
-
-  var PyEngine := PyWrapper.Engine;
-  PyEngine.ExecString('import numpy as np');
-  var pycmd := String.Format('%s = np.frombuffer(%s.numeric_array)', [PyIdentifier, pyContainerIdentifier]);
-  PyEngine.ExecString(pycmd);
+  ArrayContainer.WrapToPyObject(PyWrapper, PyIdentifier)
+    .PyExecDataAsNDArray(PyWrapper.Module, PyIdentifier);
 end;
 
 procedure TStringGridPyHelper.WrapToNDArray(PyIdentifier: string;
@@ -492,18 +522,50 @@ end;
 
 constructor TStringGridArrayContiner.Create(Grid: TStringGrid);
 begin
-  _NumericArray := GridTo2DArray(Grid);
+  _NumericArray := GridTo2DFlattenedArray(Grid);
   _Grid := Grid;
+end;
+
+procedure TStringGridArrayContiner.PyExecDataAsNDArray(Module: TPythonModule;
+  PyIdentifier: string);
+begin
+
+  var PyEngine := Module.Engine;
+  PyEngine.ExecString('import numpy as np');
+  var pyimport := String.Format('from %s import %s', [Module.ModuleName, _PyContainerName]);
+  PyEngine.ExecString(pyimport);
+  var pycmdasarray := String.Format('%s = np.asarray(%s.numeric_array)', [PyIdentifier, _PyContainerName]);
+  PyEngine.ExecString(pycmdasarray);
+  var pycmdreshape := String.Format('%s = %s.reshape(%d, %d)', [PyIdentifier, PyIdentifier, _Grid.NumDataRows, _Grid.NumDataColumns]);
+  PyEngine.ExecString(pycmdreshape);
+end;
+
+function TStringGridArrayContiner.GetLineBreakSize: Integer;
+begin
+  RESULT := _Grid.ColCount - _Grid.FixedCols;
 end;
 
 function TStringGridArrayContiner.GetValueByIx(i, j: Integer): Double;
 begin
-  RESULT := _NumericArray[i][j];
+  RESULT := _NumericArray[i * Breaksize + j];
 end;
 
 procedure TStringGridArrayContiner.SetValueByIx(i, j: Integer; value: Double);
 begin
-  _NumericArray[i][j] := value;
+  _NumericArray[i * BreakSize + j] := value;
+end;
+
+function TStringGridArrayContiner.WrapToPyObject(PyWrapper: TPyDelphiWrapper;
+  PyIdentifier: string): TStringGridArrayContiner;
+begin
+  //var pyContainerIdentifier: AnsiString := 'tarray_'+PyIdentifier;
+  _PyContainerName := String.Format(Self.PYIDENTIFIER_TEMPLATE, [PyIdentifier]);
+
+  var pyObj := PyWrapper.Wrap(Self, soOwned);
+  PyWrapper.Module.SetVar(Self._PyContainerName, pyObj);
+  PyWrapper.Engine.Py_DECREF(pyObj);
+
+  EXIT(Self);
 end;
 
 end.
