@@ -236,7 +236,8 @@ object Form1: TForm1
           'Use Python script injections'
           'Use CPython Engine Instructions'
           'Use PyDelphiWrapper (wrap array as object field)'
-          'Use NumPy4Delphi wrapping')
+          'Use NumPy4Delphi wrapping'
+          'Use Memory Buffer Protocol')
         TabOrder = 4
       end
       object LabeledEditTablePyIdentifier: TLabeledEdit
