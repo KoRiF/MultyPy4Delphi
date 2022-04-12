@@ -107,6 +107,7 @@ const
   ITEM_IX_CPYTHON_INSTRUCTIONS = 1;
   ITEM_IX_WRAP_AS_FIELD = 2;
   ITEM_IX_NUMPY4DELPHI_WRAPPING = 3;
+  ITEM_IX_MEMORY_BUFFER_PROTOCOL = 4;
 begin
   var tableIdentifier := LabeledEditTablePyIdentifier.Text;
 
@@ -120,6 +121,8 @@ begin
     StringGridDataTable.WrapAsObjectField(PyDelphiWrapper1, tableIdentifier);
   ITEM_IX_NUMPY4DELPHI_WRAPPING:
     StringGridDataTable.WrapToNDArray(tableIdentifier, PythonModule1);
+  ITEM_IX_MEMORY_BUFFER_PROTOCOL:
+    StringGridDataTable.ShareAsMemoryNumericData(PyDelphiWrapper1, tableIdentifier);
   else
     MessageDlg('Option is not selected', mtError, [mbCancel], 0);
     Exit;
