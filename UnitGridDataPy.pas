@@ -21,9 +21,10 @@ type
       function GetValueByIx(i, j: Integer): Double;
       procedure SetValueByIx(i, j: Integer; value: Double);
       function GetPyDataPointer(): THandle;
+      function GridAsNumericArray(): TArray<Double>;
     public
       constructor Create(Grid: TStringGrid);
-      property numeric_array: TArray<Double> read _NumericArray;
+      property numeric_array: TArray<Double> read GridAsNumericArray;
       property Value[i, j: Integer]: Double read GetValueByIx write SetValueByIx; default;
       property cpython_id: Integer write _CPython_id;
     public
@@ -626,12 +627,19 @@ end;
 
 function TStringGridArrayContainer.GetValueByIx(i, j: Integer): Double;
 begin
-  RESULT := _NumericArray[i * Breaksize + j];
+  RESULT := numeric_array[i * Breaksize + j];
+end;
+
+function TStringGridArrayContainer.GridAsNumericArray: TArray<Double>;
+begin
+  if Length(_NumericArray)=0 then
+    _NumericArray := GridTo2DFlattenedArray(_Grid);
+  RESULT := _NumericArray;
 end;
 
 procedure TStringGridArrayContainer.SetValueByIx(i, j: Integer; value: Double);
 begin
-  _NumericArray[i * BreakSize + j] := value;
+  numeric_array[i * BreakSize + j] := value;
 end;
 
 function TStringGridArrayContainer.WrapToPyObject(PyWrapper: TPyDelphiWrapper;
