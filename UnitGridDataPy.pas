@@ -15,7 +15,6 @@ type
       _NumericArray: TArray<Double>;
       _PyContainerName: String;
       _pData: Pointer;
-      //_CPython_id: Integer;
       _ShareName: String;
       _BufLength: NativeInt;
     private
@@ -23,20 +22,16 @@ type
       property Breaksize: Integer read GetLineBreakSize;
       function GetValueByIx(i, j: Integer): Double;
       procedure SetValueByIx(i, j: Integer; value: Double);
-      //function GetPyDataPointer(): THandle;
       function GridAsNumericArray(): TArray<Double>;
       function GetShareName(): String;
     public
       constructor Create(Grid: TStringGrid);
       property numeric_array: TArray<Double> read GridAsNumericArray;
       property Value[i, j: Integer]: Double read GetValueByIx write SetValueByIx; default;
-      //property cpython_id: Integer write _CPython_id;
       property ShareName: String read GetShareName;
     public
-      //property PyDataPointer: THandle read GetPyDataPointer;
       function WrapToPyObject(PyWrapper: TPyDelphiWrapper; PyIdentifier: string): TStringGridArrayContainer;
       procedure PyExecDataAsNDArray(Module: TPythonModule; PyIdentifier: string);
-      //function PyExecCreateNDArrayData(Module: TPythonModule; PyIdentifier: string): TStringGridArrayContainer;
       function PyExecShareAsNDArray(PyIdentifier: string): TStringGridArrayContainer;
       function ShareArrayMemory():TStringGridArrayContainer;
       function AllocateData(pBuffer: Pointer = nil): TStringGridArrayContainer;
@@ -44,7 +39,6 @@ type
 
   TStringGridPyHelper = Class Helper for TStringGrid
     procedure WrapAsObjectField(PyWrapper: TPyDelphiWrapper; PyIdentifier: string);
-    //function PreservePyMemory(PyWrapper: TPyDelphiWrapper; PyIdentifier: string): TStringGridArrayContainer;
     procedure ShareAsMemoryNumericData(PyIdentifier: string);
 
     procedure InjectToPyList(PyIdentifier: string);
@@ -53,7 +47,6 @@ type
     procedure FillToCPyNDArray(PyIdentifier: string);
 
     procedure Wrap1DToArray(Wrapper: TPyDelphiWrapper; PyIdentifier: string; dim: Integer = 0);
-    //procedure Wrap2DToFlattenedArray(Wrapper: TPyDelphiWrapper; PyIdentifier: string);
     procedure WrapToNDArray(PyIdentifier: string; PyModule: TPythonModule);
 
   private
@@ -94,6 +87,8 @@ type
 implementation
 
 uses Rtti, np.Base, np.Models, UnitMemShare;
+
+
 
 function CurrentPyModule(): PPyObject;
 begin
@@ -193,7 +188,7 @@ begin
   PyEngine := PythonEngine.GetPythonEngine();
   with PyEngine do
   begin
-    var pyListObj := PyList_New(ListDataLength); //ExecString(String.Format('%s = [None]* %d',[PyListIdentifier, ListDataLength]));
+    var pyListObj := PyList_New(ListDataLength);
     for var  ix := 0 to ListDataLength - 1 do
     begin
       var item: String;
@@ -202,7 +197,7 @@ begin
       else
         item := Grid.Cells[offsetCol + ix, offsetRow];
       var pyItem := PyEngine.PyFloat_FromString(@item[1]);
-      PyList_SetItem(pyListObj, ix, pyItem); //ExecString(String.Format('%s[%d] = %s',[PyListIdentifier, ix, item]));
+      PyList_SetItem(pyListObj, ix, pyItem);
     end;
 
     var pyModule := CurrentPyModule();
@@ -224,20 +219,19 @@ begin
   PyEngine := PythonEngine.GetPythonEngine();
   with PyEngine do
   begin
-    var pyTableObj := PyList_New(Ndatarows);//ExecString(String.Format('%s = [None]* %d',[PyListIdentifier, Ndatarows]));
+    var pyTableObj := PyList_New(Ndatarows);
     for var  rowIx := 0 to Ndatarows - 1 do
     begin
-      var pyRowObj := PyList_New(Ndatacolumns); //ExecString(String.Format('%s_ = [None]* %d',[PyListIdentifier, Ndatacolumns]));
+      var pyRowObj := PyList_New(Ndatacolumns);
       for var colIx := 0 to Ndatacolumns - 1 do
       begin
         var item : AnsiString := Grid.Cells[colIx + offsetCols, rowIx + offsetRow];
         if item = '' then
-          continue;
+          item := '0.0';
         var pyItem := PyEngine.PyUnicode_FromString(@item[1]);
         PyList_SetItem(pyRowObj, colIx, pyItem);
-         //ExecString(String.Format('%s_[%d] = %s',[PyListIdentifier, colIx, Grid.Cells[colIx + offsetCols, rowIx + offsetRow]]));
       end;
-      PyList_SetItem(pyTableObj, rowIx, pyRowObj); //ExecString(String.Format('%s[%d] = %s_',[PyListIdentifier, rowIx, PyListIdentifier]));
+      PyList_SetItem(pyTableObj, rowIx, pyRowObj);
 
       var pyModule := CurrentPyModule();
       var pyListId: AnsiString := PyIdentifier;
@@ -316,7 +310,7 @@ begin
     begin
       var item := Grid.Cells[colIx + offsetCols, rowIx + offsetRow];
       if item = '' then
-        continue;
+        item := '0.0';
       RESULT[rowIx * Ndatacolumns + colIx] := StrToFloat(item);
     end;
   end;
@@ -334,8 +328,6 @@ begin
   var Ndatacolumns := Grid.ColCount - Grid.FixedCols;
   var offsetCols := Grid.FixedCols;
 
-  //SetLength(RESULT, Ndatarows * Ndatacolumns);
-
   for var  rowIx := 0 to Ndatarows - 1 do
   begin
     for var colIx := 0 to Ndatacolumns - 1 do
@@ -343,29 +335,22 @@ begin
       var item := Grid.Cells[colIx + offsetCols, rowIx + offsetRow];
       if item = '' then
         continue;
-      var offset := (rowIx * Ndatacolumns + colIx);// * SizeOf(Double)
+      var offset := (rowIx * Ndatacolumns + colIx);
 
       (pValue0 + offset)^ := Double(StrToFloat(item));
-      //Grid.Cells[colIx + offsetCols, rowIx + offsetRow] := FloatToStr((pValue0 + offset)^);
     end;
   end;
 {$POINTERMATH OFF}
 end;
 
 procedure PyWrapGridAsArray(Grid: TStringGrid; PyModule: TPythonModule; PyIdentifier: String;  CreateArrayFromGrid: ConverterToArray);
-//var NumericArray: TRecNumericData;
 begin
-  //NumericArray.numeric_data := CreateArrayFromGrid();
-  var GridArray := CreateArrayFromGrid();   //TArray<Double>
+  var GridArray := CreateArrayFromGrid();
   var PyNDArray := TNumPy.ConvertArrayToNDarray<Double>(GridArray);
   var PasNDArray := TNDArray<Double>.Create(PyNDArray);
   var pPyArrayData := PyNDArray.data;
 
-  //var pyWrappedArray := PyWrapper.WrapRecord(@NumericArray, TRttiContext.Create.GetType(TypeInfo(TRecNumericData)) as TRttiStructuredType);
-  //var pyWrappedArray := PyWrapper.Wrap(PasNDArray);
-
   PyModule.SetVar(AnsiString(PyIdentifier), PasNDArray.Handle);
-  //? PyWrapper.Engine.Py_DecRef(PasNDArray.Handle);
 
   PyModule.SetVar(AnsiString(PyIdentifier + '_data'), pPyArrayData);
   PyModule.Engine.Py_DecRef(pPyArrayData);
@@ -514,7 +499,8 @@ var pMemBuf: Pointer;
 begin
 
   var Container := TStringGridArrayContainer.Create(Self)
-    .AllocateData()   //remove this line for direct allocation to Share  or pass pointer as a parameter for pre-allocated buffer
+    .AllocateData()   //remove this line for direct allocation to Share
+                      //or pass pointer as a parameter for pre-allocated buffer  .AllocateData(pBuffer)
     .ShareArrayMemory()
     .PyExecShareAsNDArray(PyIdentifier);
 end;
@@ -567,19 +553,6 @@ begin
     WrapGridAsNumPy2NDArray(PyModule,  PyIdentifier, Self.CoversionTo2DArray()); // [ [Cell[0,0] ]]
 end;
 
-//procedure TStringGridPyHelper.WrapToNDArray(Wrapper: TPyDelphiWrapper;
-//  PyIdentifier: string);
-//begin
-//  if (Self.RowCount > 1) and (Self.ColCount > 1) then
-//    Wrap2DToFlattenedArray(Wrapper, PyIdentifier)
-//  else if (Self.RowCount = 1) and (Self.ColCount > 1) then
-//    Wrap1DToArray(Wrapper, PyIdentifier, 0)
-//  else if (Self.RowCount > 1) and (Self.ColCount = 1) then
-//    Wrap1DToArray(Wrapper, PyIdentifier, 1)
-//  else
-//    Wrap2DToFlattenedArray(Wrapper, PyIdentifier); // [ [Cell[0,0] ]]
-//end;
-
 { TStringGridArrayContiner }
 
 function TStringGridArrayContainer.AllocateData(pBuffer: Pointer = nil): TStringGridArrayContainer;
@@ -592,12 +565,12 @@ begin
 
 
   if pBuffer = nil then
-  begin
+  begin   // use TArray as a storage
     _NumericArray := GridTo2DFlattenedArray(_Grid);
-    _pData := @_NumericArray[0];//GetMemory(_BufLength);
+    _pData := @_NumericArray[0];
   end
   else
-  begin
+  begin  // use pointed memory as a storage
     _pData := pBuffer;
     GridTo2DFlattenedMemory(_Grid, _pData);
   end;
@@ -655,11 +628,6 @@ function TStringGridArrayContainer.GetLineBreakSize: Integer;
 begin
   RESULT := _Grid.ColCount - _Grid.FixedCols;
 end;
-
-//function TStringGridArrayContainer.GetPyDataPointer: THandle;
-//begin
-//  RESULT := Cardinal(_CPython_id);
-//end;
 
 function TStringGridArrayContainer.GetShareName: String;
 begin
