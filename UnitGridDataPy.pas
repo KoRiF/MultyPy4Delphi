@@ -639,7 +639,7 @@ end;
 
 procedure TStringGridArrayContainer.SetValueByIx(i, j: Integer; value: Double);
 begin
-  _NumericArray[i * BreakSize + j] := value;
+  numeric_array[i * BreakSize + j] := value;
 end;
 
 function TStringGridArrayContainer.WrapToPyObject(PyWrapper: TPyDelphiWrapper;
