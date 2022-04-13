@@ -122,7 +122,7 @@ begin
   ITEM_IX_NUMPY4DELPHI_WRAPPING:
     StringGridDataTable.WrapToNDArray(tableIdentifier, PythonModule1);
   ITEM_IX_MEMORY_BUFFER_PROTOCOL:
-    StringGridDataTable.ShareAsMemoryNumericData(PyDelphiWrapper1, tableIdentifier);
+    StringGridDataTable.ShareAsMemoryNumericData(tableIdentifier);
   else
     MessageDlg('Option is not selected', mtError, [mbCancel], 0);
     Exit;

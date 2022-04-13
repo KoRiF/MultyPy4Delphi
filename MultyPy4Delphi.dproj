@@ -129,6 +129,7 @@
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="UnitGridDataPy.pas"/>
+        <DCCReference Include="UnitMemShare.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
