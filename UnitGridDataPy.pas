@@ -14,30 +14,38 @@ type
       _Grid: TStringGrid;
       _NumericArray: TArray<Double>;
       _PyContainerName: String;
-      _CPython_id: Integer;  
+      _pData: Pointer;
+      //_CPython_id: Integer;
+      _ShareName: String;
+      _BufLength: NativeInt;
     private
       function GetLineBreakSize(): Integer;
       property Breaksize: Integer read GetLineBreakSize;
       function GetValueByIx(i, j: Integer): Double;
       procedure SetValueByIx(i, j: Integer; value: Double);
-      function GetPyDataPointer(): THandle;
+      //function GetPyDataPointer(): THandle;
       function GridAsNumericArray(): TArray<Double>;
+      function GetShareName(): String;
     public
       constructor Create(Grid: TStringGrid);
       property numeric_array: TArray<Double> read GridAsNumericArray;
       property Value[i, j: Integer]: Double read GetValueByIx write SetValueByIx; default;
-      property cpython_id: Integer write _CPython_id;
+      //property cpython_id: Integer write _CPython_id;
+      property ShareName: String read GetShareName;
     public
-      property PyDataPointer: THandle read GetPyDataPointer;
+      //property PyDataPointer: THandle read GetPyDataPointer;
       function WrapToPyObject(PyWrapper: TPyDelphiWrapper; PyIdentifier: string): TStringGridArrayContainer;
       procedure PyExecDataAsNDArray(Module: TPythonModule; PyIdentifier: string);
-      function PyExecCreateNDArrayData(Module: TPythonModule; PyIdentifier: string): TStringGridArrayContainer;
+      //function PyExecCreateNDArrayData(Module: TPythonModule; PyIdentifier: string): TStringGridArrayContainer;
+      function PyExecShareAsNDArray(PyIdentifier: string): TStringGridArrayContainer;
+      function ShareArrayMemory():TStringGridArrayContainer;
+      function AllocateData(pBuffer: Pointer = nil): TStringGridArrayContainer;
   End;
 
   TStringGridPyHelper = Class Helper for TStringGrid
     procedure WrapAsObjectField(PyWrapper: TPyDelphiWrapper; PyIdentifier: string);
-    function PreservePyMemory(PyWrapper: TPyDelphiWrapper; PyIdentifier: string): TStringGridArrayContainer;
-    procedure ShareAsMemoryNumericData(PyWrapper: TPyDelphiWrapper;PyIdentifier: string);
+    //function PreservePyMemory(PyWrapper: TPyDelphiWrapper; PyIdentifier: string): TStringGridArrayContainer;
+    procedure ShareAsMemoryNumericData(PyIdentifier: string);
 
     procedure InjectToPyList(PyIdentifier: string);
     procedure InjectToNDArray(PyIdentifier: string);
@@ -60,9 +68,11 @@ type
     procedure SetDataRows(M: Integer);
     function GetDataColumns(): Integer;
     procedure SetDataColumns(N: Integer);
+    function GetDataCapacity(): Integer;
   public
     property NumDataRows: Integer read GetDataRows write SetDataRows;
     property NumDataColumns: Integer read GetDataColumns write SetDataColumns;
+    property DataCapacity: Integer read GetDataCapacity;
   End;
 
 
@@ -83,7 +93,7 @@ type
   var PythonModuleName: String;
 implementation
 
-uses Rtti, np.Base, np.Models;
+uses Rtti, np.Base, np.Models, UnitMemShare;
 
 function CurrentPyModule(): PPyObject;
 begin
@@ -444,10 +454,14 @@ begin
   PyEngine.ExecString('import numpy as np');
 
   Self.FillToCPyList(PyIdentifier);
-  //PyEngine.ExecString(String.Format('import %s', [PythonModuleName]));
 
   var injScript := String.Format('%s = np.asarray(%s)', [PyIdentifier, PyIdentifier]);
   PyEngine.ExecString(injScript);
+end;
+
+function TStringGridPyHelper.GetDataCapacity: Integer;
+begin
+  RESULT := NumDataRows * NumDataColumns;
 end;
 
 function TStringGridPyHelper.GetDataColumns: Integer;
@@ -483,13 +497,7 @@ begin
     PyExecInjectGridTo2DPyList(Self, PyIdentifier); // [ [Cell[0,0] ]]
 end;
 
-function TStringGridPyHelper.PreservePyMemory(PyWrapper: TPyDelphiWrapper;
-  PyIdentifier: string): TStringGridArrayContainer;
-begin
-  RESULT := TStringGridArrayContainer.Create(Self)
-    .WrapToPyObject(PyWrapper, PyIdentifier)
-    .PyExecCreateNDArrayData(PyWrapper.Module, PyIdentifier);
-end;
+
 
 procedure TStringGridPyHelper.SetDataColumns(N: Integer);
 begin
@@ -501,17 +509,14 @@ begin
   Self.RowCount := Self.FixedRows + M;
 end;
 
-procedure TStringGridPyHelper.ShareAsMemoryNumericData(PyWrapper: TPyDelphiWrapper; PyIdentifier: string);
+procedure TStringGridPyHelper.ShareAsMemoryNumericData(PyIdentifier: string);
 var pMemBuf: Pointer;
 begin
-  var Container := PreservePyMemory(PyWrapper, PyIdentifier);
-  pMemBuf := Ptr(Container.PyDataPointer);
 
-  var PyEngine := PythonEngine.GetPythonEngine();
-  var p0 := PyEngine.DllHandle;
-
-  pMemBuf := Ptr(p0 + THandle(pMemBuf));
-  GridTo2DFlattenedMemory(Self, pMemBuf);
+  var Container := TStringGridArrayContainer.Create(Self)
+    .AllocateData()   //remove this line for direct allocation to Share  or pass pointer as a parameter for pre-allocated buffer
+    .ShareArrayMemory()
+    .PyExecShareAsNDArray(PyIdentifier);
 end;
 
 function TStringGridPyHelper.To2DArray: TArray2D<Double>;
@@ -577,29 +582,36 @@ end;
 
 { TStringGridArrayContiner }
 
-constructor TStringGridArrayContainer.Create(Grid: TStringGrid);
+function TStringGridArrayContainer.AllocateData(pBuffer: Pointer = nil): TStringGridArrayContainer;
 begin
-  _NumericArray := GridTo2DFlattenedArray(Grid);
-  _Grid := Grid;
-end;
+  SetLength(_NumericArray, _Grid.DataCapacity);
 
-function TStringGridArrayContainer.PyExecCreateNDArrayData(
-  Module: TPythonModule; PyIdentifier: string): TStringGridArrayContainer;
-begin
-  var PyEngine := Module.Engine;
-  PyEngine.ExecString('import numpy as np');
-  var pycmdimport := String.Format('from %s import %s', [Module.ModuleName, _PyContainerName]);
-  PyEngine.ExecString(pycmdimport);
+  _BufLength := _Grid.DataCapacity * SizeOf(Double);
+  if _BufLength = 0 then
+    Exit;
 
-  var pycmdcreate := String.Format('%s = np.zeros((%d, %d))', [PyIdentifier, _Grid.NumDataRows, _Grid.NumDataColumns]);
 
-  PyEngine.ExecString(pycmdcreate);
-
-  var pycmddataid := String.Format('%s.cpython_id = id(%s.data)', [_PyContainerName, PyIdentifier]);
-  PyEngine.ExecString(pycmddataid);
-
+  if pBuffer = nil then
+  begin
+    _NumericArray := GridTo2DFlattenedArray(_Grid);
+    _pData := @_NumericArray[0];//GetMemory(_BufLength);
+  end
+  else
+  begin
+    _pData := pBuffer;
+    GridTo2DFlattenedMemory(_Grid, _pData);
+  end;
   EXIT(Self);
 end;
+
+constructor TStringGridArrayContainer.Create(Grid: TStringGrid);
+begin
+  //_NumericArray := GridTo2DFlattenedArray(Grid);
+  _Grid := Grid;
+  _pData := nil;
+end;
+
+
 
 procedure TStringGridArrayContainer.PyExecDataAsNDArray(Module: TPythonModule;
   PyIdentifier: string);
@@ -615,14 +627,45 @@ begin
   PyEngine.ExecString(pycmdreshape);
 end;
 
+
+
+function TStringGridArrayContainer.PyExecShareAsNDArray(PyIdentifier: string): TStringGridArrayContainer;
+begin
+  var PyEngine := PythonEngine.GetPythonEngine();
+
+  pyEngine.ExecString('from multiprocessing import shared_memory');
+  var pycmd_share := String.Format('share_%s = shared_memory.SharedMemory("%s")', [PyIdentifier, ShareName]);
+  pyEngine.ExecString(pycmd_share);
+
+  var pycmd_buf := String.Format('buf_%s = share_%s.buf[:%d]', [PyIdentifier, PyIdentifier, _BufLength]);
+  pyEngine.ExecString(pycmd_buf);
+
+  PyEngine.ExecString('import numpy as np');
+
+  var pycmdcreate := String.Format('%s = np.frombuffer(buf_%s)', [PyIdentifier, PyIdentifier]);
+  PyEngine.ExecString(pycmdcreate);
+
+  var pycmdreshape := String.Format('%s = %s.reshape(%d, %d)', [PyIdentifier, PyIdentifier, _Grid.NumDataRows, _Grid.NumDataColumns]);
+  PyEngine.ExecString(pycmdreshape);
+
+  EXIT(Self);
+end;
+
 function TStringGridArrayContainer.GetLineBreakSize: Integer;
 begin
   RESULT := _Grid.ColCount - _Grid.FixedCols;
 end;
 
-function TStringGridArrayContainer.GetPyDataPointer: THandle;
+//function TStringGridArrayContainer.GetPyDataPointer: THandle;
+//begin
+//  RESULT := Cardinal(_CPython_id);
+//end;
+
+function TStringGridArrayContainer.GetShareName: String;
 begin
-  RESULT := Cardinal(_CPython_id);
+  if _ShareName = '' then
+    _ShareName := GenerateShareName();
+  RESULT := _ShareName;
 end;
 
 function TStringGridArrayContainer.GetValueByIx(i, j: Integer): Double;
@@ -642,10 +685,20 @@ begin
   numeric_array[i * BreakSize + j] := value;
 end;
 
+function TStringGridArrayContainer.ShareArrayMemory: TStringGridArrayContainer;
+begin
+  var pShare := CreateMemoryShare(ShareName);
+  if _pData = nil then
+    GridTo2DFlattenedMemory(_Grid, pShare) //direct share allocation
+  else
+    MemCopy(_pData, pShare, _BufLength);   // copy allocated array
+
+  EXIT(Self);
+end;
+
 function TStringGridArrayContainer.WrapToPyObject(PyWrapper: TPyDelphiWrapper;
   PyIdentifier: string): TStringGridArrayContainer;
 begin
-  //var pyContainerIdentifier: AnsiString := 'tarray_'+PyIdentifier;
   _PyContainerName := String.Format(Self.PYIDENTIFIER_TEMPLATE, [PyIdentifier]);
 
   var pyObj := PyWrapper.Wrap(Self, soOwned);

@@ -237,7 +237,7 @@ object Form1: TForm1
           'Use CPython Engine Instructions'
           'Use PyDelphiWrapper (wrap array as object field)'
           'Use NumPy4Delphi wrapping'
-          'Use Memory Buffer Protocol')
+          'Use Shared Memory')
         TabOrder = 4
       end
       object LabeledEditTablePyIdentifier: TLabeledEdit
