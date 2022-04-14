@@ -122,7 +122,7 @@ begin
   ITEM_IX_NUMPY4DELPHI_WRAPPING:
     StringGridDataTable.WrapToNDArray(tableIdentifier, PythonModule1);
   ITEM_IX_MEMORY_BUFFER_PROTOCOL:
-    StringGridDataTable.ShareAsMemoryNumericData(tableIdentifier);
+    StringGridDataTable.ShareAsMemoryNumericData(tableIdentifier);//, PythonModule1
   else
     MessageDlg('Option is not selected', mtError, [mbCancel], 0);
     Exit;
@@ -130,11 +130,13 @@ begin
 
   var tablePyIdentifier := LabeledEditTablePyIdentifier.Text;
 
+  SynEditPythonScript.Lines.Clear;
+
   if UnitGridDataPy.PythonModuleName <> '' then
   begin
     var printline0 := String.Format('from %s import %s',[PythonModule1.ModuleName, tablePyIdentifier]);
     if pos(printline0, SynEditPythonScript.Text) = 0 then
-      SynEditPythonScript.Lines.Add(printline0);
+      SynEditPythonScript.Lines.Add('#' + printline0 + '# uncomment only for TNumPy usage');
   end;
 
   var printline1 := String.Format('print(type(%s))', [tablePyIdentifier]);
