@@ -32,7 +32,7 @@ type
     class function PeakShare(var Name: String): TSharedMemoryBuffer;
     class function Free(Name: String = ''): Boolean;
   private
-    class var Shares: TDictionary<String, TSharedMemoryBuffer>;
+    class var SharesPool: TDictionary<String, TSharedMemoryBuffer>;
     class var _DefaultAccessMode: Cardinal;
     class function getDefaultAccessMode: Cardinal; static;
     class procedure setDefaultAccessMode(accessMode: Cardinal); static;
@@ -125,13 +125,13 @@ begin
   if Name = '' then
     EXIT(True);
 
-  if Shares.TryGetValue(Name, Share) then
+  if SharesPool.TryGetValue(Name, Share) then
   begin
     FreeAndNil(Share);
-    Shares.Remove(Name);
+    SharesPool.Remove(Name);
   end;
 
-  RESULT := Shares.Count = 0;
+  RESULT := SharesPool.Count = 0;
 end;
 
 function TSharedMemoryBuffer.getAccessMode: Cardinal;
@@ -150,20 +150,20 @@ end;
 
 class function TSharedMemoryBuffer.New(Name: string): TSharedMemoryBuffer;
 begin
-  if Shares.ContainsKey(Name) then
+  if SharesPool.ContainsKey(Name) then
     EXIT(nil);
 
   var newShare := TSharedMemoryBuffer.Create(Name);
-  Shares.Add(Name, newShare);
+  SharesPool.Add(Name, newShare);
   RESULT := newShare;
 end;
 
 class function TSharedMemoryBuffer.Peak(): String;
   begin
     //DONE: implement
-    var Nshares := Shares.Keys.Count;
+    var Nshares := SharesPool.Keys.Count;
     if Nshares > 0 then
-      RESULT := Shares.Keys.ToArray[Nshares-1]
+      RESULT := SharesPool.Keys.ToArray[Nshares-1]
     else
       RESULT := '';
   end;
@@ -172,7 +172,7 @@ class function TSharedMemoryBuffer.PeakShare(var Name: String): TSharedMemoryBuf
 begin
   if Name = '' then
     Name := Peak();
-  Shares.TryGetValue(Name, RESULT);
+  SharesPool.TryGetValue(Name, RESULT);
 end;
 
 class procedure TSharedMemoryBuffer.setDefaultAccessMode(accessMode: Cardinal);
@@ -183,7 +183,7 @@ end;
 class function TSharedMemoryBuffer.ShareMemory(Name: string): Pointer;
 var Share: TSharedMemoryBuffer;
 begin
-  if Shares.TryGetValue(Name, Share) then
+  if SharesPool.TryGetValue(Name, Share) then
     RESULT := Share.Share()
   else
     RESULT := TSharedMemoryBuffer.New(Name).Share();
@@ -199,8 +199,8 @@ begin
 end;
 
 initialization
-  TSharedMemoryBuffer.Shares := TDictionary<String, TSharedMemoryBuffer>.Create();
+  TSharedMemoryBuffer.SharesPool := TDictionary<String, TSharedMemoryBuffer>.Create();
 finalization
   repeat until TSharedMemoryBuffer.Free();
-  TSharedMemoryBuffer.Shares.Free;
+  TSharedMemoryBuffer.SharesPool.Free;
 end.
