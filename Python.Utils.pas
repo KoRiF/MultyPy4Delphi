@@ -1478,8 +1478,11 @@ end;
 initialization
 
 finalization
-  if g_MyPyEngine <> nil then
-     FreeAndNil(g_MyPyEngine);
+  try
+    if g_MyPyEngine <> nil then
+       FreeAndNil(g_MyPyEngine);
+  except
+  end;
 
 
 end.
