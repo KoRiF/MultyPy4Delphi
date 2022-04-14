@@ -192,12 +192,14 @@ begin
     var pyListObj := PyList_New(ListDataLength);
     for var  ix := 0 to ListDataLength - 1 do
     begin
-      var item: String;
+      var item: AnsiString;
       if dim = 1 then
         item := Grid.Cells[offsetCol, offsetRow + ix]
       else
         item := Grid.Cells[offsetCol + ix, offsetRow];
-      var pyItem := PyEngine.PyFloat_FromString(@item[1]);
+      if item = '' then
+        item := '0.0';
+      var pyItem := PyUnicode_FromString(@item[1]);
       PyList_SetItem(pyListObj, ix, pyItem);
     end;
 
@@ -229,7 +231,7 @@ begin
         var item : AnsiString := Grid.Cells[colIx + offsetCols, rowIx + offsetRow];
         if item = '' then
           item := '0.0';
-        var pyItem := PyEngine.PyUnicode_FromString(@item[1]);
+        var pyItem := PyUnicode_FromString(@item[1]);
         PyList_SetItem(pyRowObj, colIx, pyItem);
       end;
       PyList_SetItem(pyTableObj, rowIx, pyRowObj);
