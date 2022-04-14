@@ -26,6 +26,8 @@ type
     property MemoryOffset: NativeUInt read _MemoryOffset write _MemoryOffset;
     property MemorySizeBytes: NativeUInt read _MemorySizeBytes write _MemorySizeBytes;
   public
+    class function OpenShare(Name: String): Pointer;
+    class function CloseShare(Name: String): Pointer;
     class function New(Name: string): TSharedMemoryBuffer;
     class function ShareMemory(Name: string = ''): Pointer;
     class function Peak(): String;
@@ -75,6 +77,11 @@ begin
   RESULT := CreateFileMapping(INVALID_HANDLE_VALUE, nil, PAGE_READWRITE, SizeHigh, SizeLow, PChar(MeMpName));
 end;
 
+function OpenMapping(MeMpName: String; AccessMode: Cardinal): THandle;
+begin
+  RESULT :=OpenFileMapping(AccessMode, True, PChar(MeMpName));
+end;
+
 function ObtainViewAccess(HMapping: THandle; AccessMode: Cardinal; Offset: NativeUInt = 0; Size: NativeUInt = 0): Pointer;
 begin
 {$IFDEF MSWINDOWS}
@@ -83,7 +90,8 @@ begin
   //{default value --} AccessMode: DWORD = FILE_MAP_ALL_ACCESS 
   RESULT := MapViewOfFile(HMapping, DWORD(AccessMode), OffsetHigh, OffsetLow, Size);
 {$ELSE}
-    { TODO : implement for other platforms }
+    { TODO : implement for POSIX platforms }
+    raise ENotImplemented.Create('Memory Mapping is Not Implemented for the current platform');
 {$ENDIF}
 end;
 
@@ -104,11 +112,20 @@ begin
 end;
 { TSharedMemoryBuffer }
 
+class function TSharedMemoryBuffer.CloseShare(Name: String): Pointer;
+begin
+  TSharedMemoryBuffer.Free(Name);
+end;
+
 constructor TSharedMemoryBuffer.Create(const Name: string; SizeKbB: Integer);
 begin
   _Name := Name;
-  _HMapping := CreateMapping(Name, SizeKbB);
   _AccessMode := DefaultMemoryAccessMode;
+
+  if SizeKbB > 0 then // create new share
+    _HMapping := CreateMapping(Name, SizeKbB)
+  else               // try open existing share
+    _HMapping := OpenMapping(Name, AccessMode);
 end;
 
 destructor TSharedMemoryBuffer.Destroy;
@@ -156,6 +173,17 @@ begin
   var newShare := TSharedMemoryBuffer.Create(Name);
   SharesPool.Add(Name, newShare);
   RESULT := newShare;
+end;
+
+class function TSharedMemoryBuffer.OpenShare(Name: String): Pointer;
+var Share: TSharedMemoryBuffer;
+begin
+  if Name = '' then
+    EXIT(nil);
+
+  Share := TSharedMemoryBuffer.Create(Name, 0);
+  SharesPool.AddOrSetValue(Name, Share);
+  RESULT := Share.Share();
 end;
 
 class function TSharedMemoryBuffer.Peak(): String;

@@ -23,12 +23,13 @@ type
       function GetValueByIx(i, j: Integer): Double;
       procedure SetValueByIx(i, j: Integer; value: Double);
       function GridAsNumericArray(): TArray<Double>;
-      function GetShareName(): String;
+      function getShareName(): String;
+      procedure setShareName(Name : String);
     public
       constructor Create(Grid: TStringGrid);
       property numeric_array: TArray<Double> read GridAsNumericArray;
       property Value[i, j: Integer]: Double read GetValueByIx write SetValueByIx; default;
-      property ShareName: String read GetShareName;
+      property ShareName: String read getShareName write setShareName;
     public
       function WrapToPyObject(PyWrapper: TPyDelphiWrapper; PyIdentifier: string): TStringGridArrayContainer;
       procedure PyExecDataAsNDArray(Module: TPythonModule; PyIdentifier: string);
@@ -624,12 +625,18 @@ begin
   EXIT(Self);
 end;
 
+procedure TStringGridArrayContainer.setShareName(Name: String);
+begin
+  TSharedMemoryBuffer.ShareMemory(Name);
+  _ShareName := Name;
+end;
+
 function TStringGridArrayContainer.GetLineBreakSize: Integer;
 begin
   RESULT := _Grid.ColCount - _Grid.FixedCols;
 end;
 
-function TStringGridArrayContainer.GetShareName: String;
+function TStringGridArrayContainer.getShareName: String;
 begin
   if _ShareName = '' then
     _ShareName := GenerateShareName();
