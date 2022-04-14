@@ -655,7 +655,7 @@ end;
 
 function TStringGridArrayContainer.ShareArrayMemory: TStringGridArrayContainer;
 begin
-  var pShare := CreateMemoryShare(ShareName);
+  var pShare := TSharedMemoryBuffer.ShareMemory(ShareName);
   if _pData = nil then
     GridTo2DFlattenedMemory(_Grid, pShare) //direct share allocation
   else
