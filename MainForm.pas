@@ -7,7 +7,7 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, SynEdit, Vcl.StdCtrls,
   PythonEngine, PythonGUIInputOutput, SynEditPythonBehaviour,
   SynEditHighlighter, SynEditCodeFolding, SynHighlighterPython, Vcl.ExtCtrls,
-  Vcl.Buttons, WrapDelphi, Vcl.Samples.Spin, Vcl.Grids, Vcl.Mask;
+  Vcl.Buttons, WrapDelphi, Vcl.Samples.Spin, Vcl.Grids, Vcl.Mask, Vcl.WinXCtrls;
 
 type
   TForm1 = class(TForm)
@@ -48,22 +48,33 @@ type
     ButtonPassTableData: TButton;
     RadioGroupPassTableOption: TRadioGroup;
     LabeledEditTablePyIdentifier: TLabeledEdit;
-    ButtonShareNumPy: TButton;
+    ButtonTestNumPyShare: TButton;
     PyDelphiWrapper1: TPyDelphiWrapper;
+    ToggleSwitchPythonLock: TToggleSwitch;
+    CheckBoxAllowNumPy: TCheckBox;
     procedure btnRunClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure ComboBoxPyVEnvChange(Sender: TObject);
     procedure SpeedButtonSelectDllClick(Sender: TObject);
     procedure PythonDelphiVar1Change(Sender: TObject);
     procedure EditPythonDllChange(Sender: TObject);
-    procedure ButtonShareNumPyClick(Sender: TObject);
+    procedure ButtonTestNumPyShareClick(Sender: TObject);
     procedure ButtonRunPyAppScriptClick(Sender: TObject);
     procedure ButtonPassTableDataClick(Sender: TObject);
     procedure SpinEditGridColumnsChange(Sender: TObject);
     procedure SpinEditGridRowsChange(Sender: TObject);
+    procedure ToggleSwitchPythonLockClick(Sender: TObject);
   private
     { Private declarations }
     _PythonEngine: TPythonEngine;  //Writhing
+    procedure LockPythonEnvironment(Active: Boolean);
+    procedure LockPyEnvGUIComponents(Active: Boolean);
+    procedure SetupPyEnvEngineComponents(useNumPy: Boolean = True);
+    procedure ResetPyEnvEngineComponents();
+
+    procedure CheckGridVisibilityCondition();
+    function GetIsNumpyEnabled(): Boolean;
+    property IsNumpyEnabled: Boolean read GetIsNumpyEnabled;
   public
     { Public declarations }
 
@@ -88,13 +99,8 @@ var np: TNumPy;
 
 procedure TForm1.btnRunClick(Sender: TObject);
 begin
-  var WrithingPythonEngine := PythonEngine as TWrithingPythonEngine;
-  WrithingPythonEngine.Attach();
-
-  PythonDelphiVar1.Engine := PythonEngine;
-
   (PythonDelphiVar1 as TPersistentPythonDelphiVar).RestoreValue;
-  PythonEngine.ExecString(sePythonCode.Text);  //UTF8Encode()
+  PythonEngine.ExecString(sePythonCode.Text);
   (PythonDelphiVar1 as TPersistentPythonDelphiVar).StoreValue;
 
   PyDelphiWrapper1.Engine := PythonEngine;
@@ -156,35 +162,25 @@ begin
   PythonGUIInputOutput.Output := MemoSysInfoOutput;
 end;
 
-procedure TForm1.ButtonShareNumPyClick(Sender: TObject);
+procedure TForm1.ButtonTestNumPyShareClick(Sender: TObject);
 var
   PyNDArray: TNDarray;
   PasNDArray: TNDArray<Double>;
 begin
+  PyNDArray := TNumPy.ConvertArrayToNDarray<Double>(TArray<Double>.Create(1, 2, 3, 4));
+  PasNDArray := TNDArray<Double>.Create(PyNDArray);
+  var pPyArrayData := PyNDArray.data;
   try
-    Python.Utils.g_MyPyEngine := PythonEngine;
-    np := TNumPy.Init(true);
-
-    PyNDArray := TNumPy.ConvertArrayToNDarray<Double>(TArray<Double>.Create(1, 2, 3, 4));
-    PasNDArray := TNDArray<Double>.Create(PyNDArray);
-    var pPyArrayData := PyNDArray.data;
-
-    PythonModule1.Initialize(); //ForNewInterpreter
-    UnitGridDataPy.PythonModuleName := PythonModule1.ModuleName;
-
     PythonModule1.SetVar('array_data', pPyArrayData);
     PythonModule1.SetVar('delphi_pyarray', PasNDArray.Handle);
-    //PythonEngine.PyObject_SetAttrString(    ,PyNDArray.data);
-
-    PythonEngine.Py_DECREF(pPyArrayData);
-
-    PyDelphiWrapper1.Engine := PythonEngine;
-    PyDelphiWrapper1.Module := PythonModule1;
-    PyDelphiWrapper1.Initialize();
   finally
-    TNumPy.FhModuleNumPy := nil;
-    Python.Utils.g_MyPyEngine := nil;
+    PythonEngine.Py_DECREF(pPyArrayData);
   end;
+end;
+
+procedure TForm1.CheckGridVisibilityCondition;
+begin
+  StringGridDataTable.Visible := SpinEditGridColumns.Value * SpinEditGridRows.Value > 0;
 end;
 
 procedure TForm1.ComboBoxPyVEnvChange(Sender: TObject);
@@ -213,9 +209,66 @@ begin
   (PythonDelphiVar1 as TPersistentPythonDelphiVar).Init(0);
 end;
 
+function TForm1.GetIsNumpyEnabled: boolean;
+begin
+  RESULT := CheckBoxAllowNumPy.Checked;
+end;
+
+procedure TForm1.LockPyEnvGUIComponents(Active: Boolean);
+begin
+  ComboBoxPyVEnv.Enabled := not Active;
+  SpeedButtonSelectDll.Enabled := not Active;
+  CheckBoxAllowNumPy.Enabled := not Active;
+
+  btnRun.Enabled := Active;
+
+  ButtonPassTableData.Enabled := Active;
+  ButtonRunPyAppScript.Enabled := Active;
+
+  ButtonTestNumPyShare.Enabled := IsNumpyEnabled;
+end;
+
+procedure TForm1.LockPythonEnvironment(Active: Boolean);
+begin
+  if Active then
+    SetupPyEnvEngineComponents(IsNumPyEnabled)
+  else
+    ResetPyEnvEngineComponents();
+
+  LockPyEnvGUIComponents(Active);
+end;
+
 procedure TForm1.PythonDelphiVar1Change(Sender: TObject);
 begin
   ShowMessage(PythonDelphiVar1.ValueAsString);
+end;
+
+procedure TForm1.SetupPyEnvEngineComponents(useNumPy: Boolean = True);
+begin
+  var WrithingPythonEngine := PythonEngine as TWrithingPythonEngine;
+  WrithingPythonEngine.Attach();
+
+  PythonModule1.Initialize(); //ForNewInterpreter
+  //UnitGridDataPy.PythonModuleName := PythonModule1.ModuleName;
+
+  //PythonDelphiVar1.Engine := PythonEngine;
+  //PythonDelphiVar1.Initialize();
+
+  PyDelphiWrapper1.Engine := PythonEngine;
+  PyDelphiWrapper1.Module := PythonModule1;
+  PyDelphiWrapper1.Initialize();
+
+  if useNumPy then
+  begin
+    Python.Utils.g_MyPyEngine := PythonEngine;
+    np := TNumPy.Init(true);
+  end;
+end;
+
+procedure TForm1.ResetPyEnvEngineComponents;
+begin
+  TNumPy.FhModuleNumPy := nil;
+  Python.Utils.g_MyPyEngine := nil;
 end;
 
 procedure TForm1.SpeedButtonSelectDllClick(Sender: TObject);
@@ -231,11 +284,21 @@ end;
 procedure TForm1.SpinEditGridColumnsChange(Sender: TObject);
 begin
   StringGridDataTable.ColCount := SpinEditGridColumns.Value;
+  CheckGridVisibilityCondition();
 end;
 
 procedure TForm1.SpinEditGridRowsChange(Sender: TObject);
 begin
   StringGridDataTable.RowCount := SpinEditGridRows.Value;
+  CheckGridVisibilityCondition();
+end;
+
+procedure TForm1.ToggleSwitchPythonLockClick(Sender: TObject);
+begin
+  case ToggleSwitchPythonLock.State of 
+    tssOff: LockPythonEnvironment(False);
+    tssOn: LockPythonEnvironment(True);
+  end;
 end;
 
 end.

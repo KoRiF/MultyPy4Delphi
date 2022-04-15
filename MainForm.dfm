@@ -1,9 +1,8 @@
 object Form1: TForm1
   Left = 0
   Top = 0
-  ActiveControl = btnRun
   Caption = 'Multy Environmental Demo '
-  ClientHeight = 599
+  ClientHeight = 661
   ClientWidth = 624
   Color = clBtnFace
   CustomTitleBar.CaptionAlignment = taCenter
@@ -17,7 +16,7 @@ object Form1: TForm1
   TextHeight = 13
   object Splitter1: TSplitter
     Left = 0
-    Top = 15
+    Top = 0
     Width = 624
     Height = 0
     Cursor = crVSplit
@@ -25,42 +24,22 @@ object Form1: TForm1
     ResizeStyle = rsUpdate
     ExplicitTop = 341
   end
-  object HeaderControl1: THeaderControl
+  object PageControl1: TPageControl
     Left = 0
     Top = 0
     Width = 624
-    Height = 15
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'Tahoma'
-    Font.Style = [fsBold]
-    Sections = <
-      item
-        Alignment = taCenter
-        AutoSize = True
-        ImageIndex = -1
-        Text = 'Python Source code'
-        Width = 624
-      end>
-    ParentFont = False
-  end
-  object PageControl1: TPageControl
-    Left = 0
-    Top = 15
-    Width = 624
-    Height = 584
+    Height = 661
     ActivePage = TabSheetVEnvSysInfo
     Align = alClient
-    TabOrder = 1
+    TabOrder = 0
     object TabSheetVEnvSysInfo: TTabSheet
       Caption = 'Virtual Environment'
       object Panel1: TPanel
         Left = 0
-        Top = 515
+        Top = 0
         Width = 616
-        Height = 41
-        Align = alBottom
+        Height = 64
+        Align = alTop
         TabOrder = 0
         object SpeedButtonSelectDll: TSpeedButton
           Left = 448
@@ -70,16 +49,17 @@ object Form1: TForm1
           OnClick = SpeedButtonSelectDllClick
         end
         object btnRun: TButton
-          Left = 534
-          Top = 6
+          Left = 535
+          Top = 34
           Width = 75
           Height = 25
           Caption = 'Run'
+          Enabled = False
           TabOrder = 0
           OnClick = btnRunClick
         end
         object ComboBoxPyVEnv: TComboBox
-          Left = 9
+          Left = 17
           Top = 6
           Width = 264
           Height = 21
@@ -102,17 +82,35 @@ object Form1: TForm1
           Text = 'Python 3.8'
           OnChange = EditPythonDllChange
         end
+        object ToggleSwitchPythonLock: TToggleSwitch
+          Left = 17
+          Top = 33
+          Width = 249
+          Height = 20
+          StateCaptions.CaptionOn = 'Python Locked (Active)'
+          StateCaptions.CaptionOff = 'Python Environment Unlocked (Inactive)'
+          TabOrder = 3
+          OnClick = ToggleSwitchPythonLockClick
+        end
+        object CheckBoxAllowNumPy: TCheckBox
+          Left = 287
+          Top = 33
+          Width = 184
+          Height = 17
+          Caption = 'Enable TNumPy (NumPy4Delphi)'
+          TabOrder = 4
+        end
       end
       object Panel2: TPanel
         Left = 0
-        Top = 0
+        Top = 64
         Width = 616
-        Height = 515
+        Height = 569
         Align = alClient
         TabOrder = 1
         object HeaderControl2: THeaderControl
           Left = 1
-          Top = 209
+          Top = 224
           Width = 614
           Height = 17
           Font.Charset = DEFAULT_CHARSET
@@ -132,9 +130,9 @@ object Form1: TForm1
         end
         object mePythonOutput: TMemo
           Left = 1
-          Top = 226
+          Top = 241
           Width = 614
-          Height = 288
+          Height = 327
           Align = alClient
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -146,7 +144,7 @@ object Form1: TForm1
         end
         object sePythonCode: TSynEdit
           Left = 1
-          Top = 1
+          Top = 16
           Width = 614
           Height = 208
           Align = alTop
@@ -178,6 +176,26 @@ object Form1: TForm1
             'shared_variable.Value =  shared_variable.Value + 1'
             'print(f'#39'Next run -> #{shared_variable.Value}'#39')')
         end
+        object HeaderControl1: THeaderControl
+          Left = 1
+          Top = 1
+          Width = 614
+          Height = 15
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          Sections = <
+            item
+              Alignment = taCenter
+              AutoSize = True
+              ImageIndex = -1
+              Text = 'Python Source code'
+              Width = 614
+            end>
+          ParentFont = False
+        end
       end
     end
     object TabSheetData: TTabSheet
@@ -185,7 +203,7 @@ object Form1: TForm1
       ImageIndex = 1
       object StringGridDataTable: TStringGrid
         Left = 64
-        Top = 56
+        Top = 88
         Width = 549
         Height = 225
         ColCount = 1
@@ -197,7 +215,7 @@ object Form1: TForm1
       end
       object SpinEditGridRows: TSpinEdit
         Left = 25
-        Top = 56
+        Top = 88
         Width = 33
         Height = 22
         MaxValue = 100
@@ -208,7 +226,7 @@ object Form1: TForm1
       end
       object SpinEditGridColumns: TSpinEdit
         Left = 64
-        Top = 28
+        Top = 60
         Width = 33
         Height = 22
         MaxValue = 100
@@ -219,7 +237,7 @@ object Form1: TForm1
       end
       object ButtonPassTableData: TButton
         Left = 392
-        Top = 352
+        Top = 377
         Width = 161
         Height = 25
         Caption = 'Pass Table Data to Python'
@@ -228,7 +246,7 @@ object Form1: TForm1
       end
       object RadioGroupPassTableOption: TRadioGroup
         Left = 64
-        Top = 304
+        Top = 336
         Width = 281
         Height = 105
         Caption = 'Pass Table Data Options'
@@ -242,7 +260,7 @@ object Form1: TForm1
       end
       object LabeledEditTablePyIdentifier: TLabeledEdit
         Left = 152
-        Top = 29
+        Top = 61
         Width = 217
         Height = 21
         EditLabel.Width = 110
@@ -251,14 +269,17 @@ object Form1: TForm1
         TabOrder = 5
         Text = 'delphi_pytable'
       end
-      object ButtonShareNumPy: TButton
-        Left = 392
-        Top = 408
-        Width = 161
+      object ButtonTestNumPyShare: TButton
+        Left = 0
+        Top = 0
+        Width = 613
         Height = 25
-        Caption = 'Share NumPy Array'
+        Caption = 
+          'Quck Test: Share (1, 2, 3, 4) Array as  NumPy ndarray '#39'delphi_py' +
+          'array'#39' and its buffer as '#39'array_data'#39
+        Enabled = False
         TabOrder = 6
-        OnClick = ButtonShareNumPyClick
+        OnClick = ButtonTestNumPyShareClick
       end
     end
     object TabSheetAppScript: TTabSheet
@@ -266,10 +287,10 @@ object Form1: TForm1
       ImageIndex = 2
       object Panel3: TPanel
         Left = 0
-        Top = 515
+        Top = 0
         Width = 616
         Height = 41
-        Align = alBottom
+        Align = alTop
         TabOrder = 0
         object SpeedButton1: TSpeedButton
           Left = 448
@@ -285,6 +306,7 @@ object Form1: TForm1
           Width = 75
           Height = 25
           Caption = 'Run Script'
+          Enabled = False
           TabOrder = 0
           OnClick = ButtonRunPyAppScriptClick
         end
@@ -315,9 +337,9 @@ object Form1: TForm1
       end
       object MemoSysInfoOutput: TMemo
         Left = 0
-        Top = 0
+        Top = 41
         Width = 616
-        Height = 515
+        Height = 592
         Align = alClient
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -329,9 +351,9 @@ object Form1: TForm1
       end
       object Panel4: TPanel
         Left = 0
-        Top = 0
+        Top = 41
         Width = 616
-        Height = 515
+        Height = 592
         Align = alClient
         TabOrder = 2
         object HeaderControl3: THeaderControl
@@ -358,7 +380,7 @@ object Form1: TForm1
           Left = 1
           Top = 260
           Width = 614
-          Height = 254
+          Height = 331
           Align = alClient
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
